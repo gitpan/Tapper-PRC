@@ -28,7 +28,7 @@ my $prc = new Tapper::PRC;
 my ($error, $output) = $prc->log_and_exec('echo test');
 is ($output,'test','log_and_exec, array mode');
 
-$prc->{cfg} = {test_run => 1234, mcp_server => 'localhost', port => 1337};
+$prc->{cfg} = {test_run => 1234, mcp_server => 'localhost', port => 11337};
 my $pid=fork();
 if ($pid==0) {
         sleep(2); #bad and ugly to prevent race condition
@@ -37,7 +37,7 @@ if ($pid==0) {
         exit 0;
 } else {
         my $server = IO::Socket::INET->new(Listen    => 5,
-                                           LocalPort => 1337);
+                                           LocalPort => 11337);
         ok($server, 'create socket');
         my $content;
         eval{
