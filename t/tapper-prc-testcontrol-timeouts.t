@@ -8,7 +8,10 @@ use File::Temp;
 use YAML::Syck;
 use Data::Dumper;
 
+use Tapper::Config;
+
 use Test::More;
+
 
 # (XXX) need to find a way to include log4perl into tests to make sure no
 # errors reported through this framework are missed
@@ -21,7 +24,7 @@ Log::Log4perl->init(\$string);
 
 
 BEGIN { use_ok('Tapper::PRC::Testcontrol'); }
-
+my $tapper_cfg = Tapper::Config->subconfig;
 
 my $prc = Tapper::PRC::Testcontrol->new();
 
@@ -29,7 +32,7 @@ my $output_dir = File::Temp::tempdir( CLEANUP => 1 );
 my $config = {
               test_run => 1234,
               mcp_server => 'localhost',
-              mcp_port   => 1337,
+              mcp_port   => $tapper_cfg->{mcp_port},
               report_server => 'localhost',
               hostname => 'localhost',
               reboot_counter => 0,
@@ -37,13 +40,13 @@ my $config = {
               guest_number => 0,
               syncfile => '/dev/null', # just to check if set correctly in ENV
               paths => {output_dir => $output_dir},
-              testprogram_list => [{ 
+              testprogram_list => [{
                                     program => 't/files/exec/sleep.sh',
                                     runtime => 2,
                                     timeout_testprogram => 3,
                                     parameters => ['5'],
                                    },
-                                  { 
+                                  {
                                     program => 't/files/exec/sleep.sh',
                                     runtime => 2,
                                     timeout_testprogram => 5,
@@ -62,13 +65,13 @@ if ($pid==0) {
         exit 0;
 } else {
         my $server = IO::Socket::INET->new(Listen    => 5,
-                                           LocalPort => 1337);
+                                           LocalPort => $tapper_cfg->{mcp_port});
         ok($server, 'create socket');
         my @content;
         eval{
                 $SIG{ALRM}=sub{die("timeout\n");};
-                alarm(0);
-                
+                alarm(10);
+
         MESSAGE:
                 while (1) {
                         my $content;
@@ -76,10 +79,13 @@ if ($pid==0) {
                         while (my $line=<$msg_sock>) {
                                 $content.=$line;
                         }
-                        my $hash = Load($content);
-                        push @content, $hash;
-                        last MESSAGE if $hash->{state} eq 'end-testing';
-                        
+                        if ($content =~ m|GET /(.+) HTTP/1.0|g) {
+                                my %params    = split("/", $1);
+                                push @content, \%params;
+                                last MESSAGE if $params{state} eq 'end-testing';
+                        } else {
+                                fail "Content is not HTTP";
+                        }
                 }
                 alarm(0);
         };

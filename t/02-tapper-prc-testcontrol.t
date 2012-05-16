@@ -9,7 +9,7 @@ use YAML::Syck;
 
 use Log::Log4perl;
 
-use Test::More tests => 12;
+use Test::More;
 
 my $config_bkup = 't/files/tapper.backup';
 
@@ -46,7 +46,7 @@ my @content;
 my $pid=fork();
 if ($pid==0) {
         diag "Sleep a bit to prevent timout race conditions...";
-        sleep(20);
+        sleep($ENV{TAPPER_SLEEPTIME} || 10);
 
         my $testcontrol = new Tapper::PRC::Testcontrol;
         $testcontrol->run();
@@ -55,11 +55,12 @@ if ($pid==0) {
 
 } else {
         $server = IO::Socket::INET->new(Listen    => 5,
-                                        LocalPort => 1337);
+                                        LocalPort => 13377); # needs to be hard coded because config comed from
+                                                             # local file in t/files/
         ok($server, 'create socket');
         eval{
                 local $SIG{ALRM}=sub{die("timeout of 50 seconds reached while waiting for reboot test.");};
-                alarm(50);
+                alarm(3*($ENV{TAPPER_SLEEPTIME} || 0));
                 my $msg_sock = $server->accept();
                 while (my $line=<$msg_sock>) {
                         $content[0].=$line;
@@ -76,7 +77,6 @@ if ($pid==0) {
                         $content[2].=$line;
                 }
 
-
                 alarm(0);
         };
         is($@, '', 'Get state messages in time');
@@ -85,9 +85,15 @@ if ($pid==0) {
         my @msg = ({testrun_id => 1234, prc_number => 0, state => "start-testing"},
                    {testrun_id => 1234, prc_number => 0, state => 'reboot', count => 0, max_reboot => 2},
                    {testrun_id => 1234, prc_number => 0, state => 'reboot', count => 1, max_reboot => 2});
-        is_deeply(Load($content[0]), $msg[0], 'Receiving start message');
-        is_deeply(Load($content[1]), $msg[1], 'First reboot message');
-        is_deeply(Load($content[2]), $msg[2], 'Second reboot message');
+
+        for(my $i=0; $i < int @content; $i++){
+                if ($content[$i] =~ m|GET /(.+) HTTP/1.0|g) {
+                        my %params    = split("/", $1);
+                        is_deeply(\%params, $msg[$i], "Reboot message #$i");
+                } else {
+                        fail "Content is not HTTP";
+                }
+        }
 }
 
 my $config = YAML::Syck::LoadFile($config_file) or die("Can't read config file $config_file: $!");
@@ -106,7 +112,7 @@ $ENV{TAPPER_CONFIG} = "t/files/multitest.conf";
 $pid=fork();
 if ($pid==0) {
         diag "Sleep a bit to prevent timout race conditions...";
-        sleep(20);
+        sleep($ENV{TAPPER_SLEEPTIME} || 10);
 
         my $testcontrol = new Tapper::PRC::Testcontrol;
         $testcontrol->run();
@@ -148,16 +154,20 @@ if ($pid==0) {
                    {testrun_id => 1234, prc_number => 0, testprogram => 1, state => "error-testprogram"},
                    {testrun_id => 1234, prc_number => 0, state => "end-testing"});
 
-        # error msg depends on language setting, thus we don't check it, in case it exists
-        my $tmp = Load($content[2]);
-        $msg[2]->{error} = $tmp->{error} if $tmp->{error};
+        for(my $i=0; $i < int @content; $i++){
+                if ($content[$i] =~ m|GET /(.+) HTTP/1.0|g) {
+                        my %params    = split("/", $1);
 
+                        # error msg depends on language setting, thus we don't check it, in case it exists
+                        delete $params{error} if $params{error};
+                        is_deeply(\%params, $msg[$i], "Message #$i");
+                } else {
+                        fail "Content is not HTTP";
+                }
+        }
 
-        is_deeply(Load($content[0]), $msg[0], 'Receiving start message');
-        is_deeply(Load($content[1]), $msg[1], 'First test script message');
-        is_deeply(Load($content[2]), $msg[2], 'Second test script message');
-        is_deeply(Load($content[3]), $msg[3], 'Finished test');
 }
 
 
 
+done_testing;

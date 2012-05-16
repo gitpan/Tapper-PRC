@@ -1,35 +1,83 @@
+
 use strict;
 use warnings;
 
-use inc::Module::Install;
 
-name     'Tapper-PRC';
-all_from 'lib/Tapper/PRC.pm';
-author   'AMD OSRC Tapper Team <tapper@amd64.org>';
-license  'freebsd';
 
-build_requires 'Test::Fixture::DBIC::Schema' => 0;
-build_requires 'Test::Perl::Critic'          => 0;
-build_requires 'Test::MockModule'            => 0;
-build_requires 'Test::More'                  => 0;
-build_requires 'Tapper::Test' => "3.000010";
+use ExtUtils::MakeMaker 6.30;
 
-author_requires 'Module::Install::WriteAll';
 
-requires 'perl'               => '5.010';
-requires 'Tapper::Base' => "3.000010";
-requires 'Tapper::Remote' => "3.000010";
-requires 'Moose'              => 0;
-requires 'Log::Log4perl'      => 0;
-requires 'List::Util'         => 0;
-requires 'IPC::Open3'         => 0;
-requires 'File::Path'         => 0;
-requires 'common::sense'      => 0;
-requires 'YAML'               => "0.72";
 
-repository 'git://github.com/amd/Tapper-Reports-PRC.git';
-bugtracker 'http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Tapper-PRC';
+my %WriteMakefileArgs = (
+  "ABSTRACT" => "Tapper - Program run control for test program automation",
+  "AUTHOR" => "AMD OSRC Tapper Team <tapper\@amd64.org>",
+  "BUILD_REQUIRES" => {
+    "Cwd" => 0,
+    "Data::Dumper" => 0,
+    "Tapper::Config" => 0,
+    "Test::Deep" => 0,
+    "Test::MockModule" => 0,
+    "Test::More" => 0,
+    "Try::Tiny" => 0
+  },
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
+  },
+  "DISTNAME" => "Tapper-PRC",
+  "EXE_FILES" => [
+    "bin/tapper-automatic-test.pl",
+    "bin/tapper-client"
+  ],
+  "LICENSE" => "open_source",
+  "NAME" => "Tapper::PRC",
+  "PREREQ_PM" => {
+    "App::Daemon" => 0,
+    "English" => 0,
+    "File::Basename" => 0,
+    "File::Copy" => 0,
+    "File::Temp" => 0,
+    "IO::Handle" => 0,
+    "IO::Socket::INET" => 0,
+    "IPC::Open3" => 0,
+    "Log::Log4perl" => 0,
+    "Moose" => 0,
+    "MooseX::Log::Log4perl" => 0,
+    "Sys::Hostname" => 0,
+    "Tapper::Base" => 0,
+    "Tapper::Installer::Base" => 0,
+    "Tapper::Remote::Config" => 0,
+    "Tapper::Remote::Net" => 0,
+    "URI::Escape" => 0,
+    "YAML" => 0,
+    "YAML::Syck" => 0,
+    "common::sense" => 0,
+    "strict" => 0,
+    "warnings" => 0
+  },
+  "VERSION" => "4.0.1",
+  "test" => {
+    "TESTS" => "t/*.t"
+  }
+);
 
-install_script glob('bin/*');
 
-WriteAll;
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
+

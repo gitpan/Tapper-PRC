@@ -13,7 +13,7 @@ use Test::More tests => 5;
 # (XXX) need to find a way to include log4perl into tests to make sure no
 # errors reported through this framework are missed
 my $string = "
-log4perl.rootLogger           = INFO, root
+log4perl.rootLogger           = FATAL, root
 log4perl.appender.root        = Log::Log4perl::Appender::Screen
 log4perl.appender.root.stderr = 1
 log4perl.appender.root.layout = SimpleLayout";
@@ -50,9 +50,14 @@ if ($pid==0) {
                 alarm(0);
         };
         is($@, '', 'Getting data from file upload');
-
-        my $msg = Load($content);
-        is_deeply($msg, {testrun_id => 1234, prc_number => 0, state => "test"}, 'sending message to server, no virtualisation');
+        if ($content =~ m|GET /(.+) HTTP/1.0|g) {
+                my %params    = split("/", $1);
+                is_deeply(\%params, {
+                                     state => 'test', testrun_id => 1234, prc_number => 0
+                                    }, 'sending message to server, no virtualisation');
+        } else {
+                fail "Content is not HTTP";
+        }
 
         waitpid($pid,0);
 }
