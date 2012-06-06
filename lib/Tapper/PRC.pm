@@ -3,7 +3,7 @@ BEGIN {
   $Tapper::PRC::AUTHORITY = 'cpan:AMD';
 }
 {
-  $Tapper::PRC::VERSION = '4.0.1';
+  $Tapper::PRC::VERSION = '4.0.2';
 }
 # ABSTRACT: Tapper - Program run control for test program automation
 

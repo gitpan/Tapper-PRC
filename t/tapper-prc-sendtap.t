@@ -36,9 +36,9 @@ my $cfg = {paths         => {testprog_path => getcwd().'/'} ,
 
 
 my $testcontrol = Tapper::PRC::Testcontrol->new(cfg => $cfg);
-my $program = {program => 't/executables/xm',
+my $program = {program => 't/executables/ripley',
                capture => 'tap',
-               argv    => ['expected text'],
+               argv    => ["1..2", "expected text"],
                out_dir => $tempdir.'/',
                };
 
@@ -68,7 +68,8 @@ if ($pid==0) {
 
         waitpid($pid,0);
 
-        is($content, '# Tapper-suite-name: xm
+        is($content, '1..2
+# Tapper-suite-name: ripley
 # Tapper-machine-name: testhost
 # Tapper-reportgroup-testrun: 735710
 expected text

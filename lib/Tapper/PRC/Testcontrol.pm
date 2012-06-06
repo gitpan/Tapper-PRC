@@ -3,7 +3,7 @@ BEGIN {
   $Tapper::PRC::Testcontrol::AUTHORITY = 'cpan:AMD';
 }
 {
-  $Tapper::PRC::Testcontrol::VERSION = '4.0.1';
+  $Tapper::PRC::Testcontrol::VERSION = '4.0.2';
 }
 
 use IPC::Open3;
@@ -48,7 +48,9 @@ sub send_output
         $headerlines .= "# Tapper-machine-name: ".$self->cfg->{hostname}."\n"          unless $captured_output =~ /\# Tapper-machine-name:/;
         $headerlines .= "# Tapper-reportgroup-testrun: ".$self->cfg->{test_run}."\n"   unless $captured_output =~ /\# Tapper-reportgroup-testrun:/;
 
-        my ($error, $message) = $self->tap_report_away($headerlines.$captured_output);
+        $captured_output =~ s/^(1\.\.\d+\n)/$1$headerlines/m;
+
+        my ($error, $message) = $self->tap_report_away($captured_output);
         return $message if $error;
         return 0;
 
@@ -77,7 +79,7 @@ sub testprogram_execute
 
         if (not -x $program) {
                 system ("chmod", "ugo+x", $program);
-                return("tried to execute $program which is not an execuable");
+                return("tried to execute $program which is not an execuable and can not set exec flag") if not -x $program;
         }
 
         return("tried to execute $program which is a directory") if -d $program;
@@ -117,7 +119,12 @@ sub testprogram_execute
                 close $write;
                 my $killed;
                 # (XXX) better create a process group an kill this
-                local $SIG{ALRM}=sub{$killed=1;kill (15,$pid); kill (9,$pid);};
+                local $SIG{ALRM}=sub {
+                                      $killed = 1;
+                                      kill (15, $pid);
+                                      sleep ($ENV{HARNESS_ACTIVE} ? 1 : 60); # give SIG handlers some time (but not during test)
+                                      kill (9, $pid) if kill 0, $pid;
+                                     };
                 alarm ($test_program->{timeout});
                 waitpid($pid,0);
                 my $retval = $?;
@@ -472,6 +479,10 @@ sub run
         my $config = $producer->get_local_data("test-prc0");
         $self->cfg($config);
         $self->cfg->{reboot_counter} = 0 if not defined($self->cfg->{reboot_counter});
+
+        if ($self->cfg->{log_to_file}) {
+                $self->log_to_file('testing');
+        }
 
         if ($config->{times}{keep_alive_timeout}) {
                 $SIG{CHLD} = 'IGNORE';
