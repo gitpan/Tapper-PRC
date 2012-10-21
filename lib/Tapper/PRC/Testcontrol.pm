@@ -3,7 +3,7 @@ BEGIN {
   $Tapper::PRC::Testcontrol::AUTHORITY = 'cpan:AMD';
 }
 {
-  $Tapper::PRC::Testcontrol::VERSION = '4.0.2';
+  $Tapper::PRC::Testcontrol::VERSION = '4.1.0';
 }
 
 use IPC::Open3;

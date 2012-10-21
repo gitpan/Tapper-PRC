@@ -1,9 +1,11 @@
 package Tapper::PRC;
+# git description: v4.0.2-1-g7fdd8eb
+
 BEGIN {
   $Tapper::PRC::AUTHORITY = 'cpan:AMD';
 }
 {
-  $Tapper::PRC::VERSION = '4.0.2';
+  $Tapper::PRC::VERSION = '4.1.0';
 }
 # ABSTRACT: Tapper - Program run control for test program automation
 
