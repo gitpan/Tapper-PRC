@@ -1,11 +1,11 @@
 package Tapper::PRC;
-# git description: v4.0.2-1-g7fdd8eb
+# git description: v4.1.0-5-gda03417
 
 BEGIN {
-  $Tapper::PRC::AUTHORITY = 'cpan:AMD';
+  $Tapper::PRC::AUTHORITY = 'cpan:TAPPER';
 }
 {
-  $Tapper::PRC::VERSION = '4.1.0';
+  $Tapper::PRC::VERSION = '4.1.1';
 }
 # ABSTRACT: Tapper - Program run control for test program automation
 
@@ -48,6 +48,11 @@ __END__
 =head1 NAME
 
 Tapper::PRC - Tapper - Program run control for test program automation
+
+=head1 DESCRIPTION
+
+This distribution implements a program run control for test program
+automation. It is part of the Tapper distribution.
 
 =head1 FUNCTIONS
 

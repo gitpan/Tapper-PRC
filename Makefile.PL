@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 
-
+use 5.010;
 
 use ExtUtils::MakeMaker 6.30;
 
@@ -50,11 +50,10 @@ my %WriteMakefileArgs = (
     "URI::Escape" => 0,
     "YAML" => 0,
     "YAML::Syck" => 0,
-    "common::sense" => 0,
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "4.1.0",
+  "VERSION" => "4.1.1",
   "test" => {
     "TESTS" => "t/*.t"
   }
