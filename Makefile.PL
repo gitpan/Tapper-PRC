@@ -31,7 +31,6 @@ my %WriteMakefileArgs = (
   "LICENSE" => "open_source",
   "NAME" => "Tapper::PRC",
   "PREREQ_PM" => {
-    "App::Daemon" => 0,
     "English" => 0,
     "File::Basename" => 0,
     "File::Copy" => 0,
@@ -53,7 +52,7 @@ my %WriteMakefileArgs = (
     "strict" => 0,
     "warnings" => 0
   },
-  "VERSION" => "4.1.1",
+  "VERSION" => "4.1.2",
   "test" => {
     "TESTS" => "t/*.t"
   }

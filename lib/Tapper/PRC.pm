@@ -1,11 +1,11 @@
 package Tapper::PRC;
-# git description: v4.1.0-5-gda03417
+# git description: v4.1.1-11-g75f1086
 
 BEGIN {
   $Tapper::PRC::AUTHORITY = 'cpan:TAPPER';
 }
 {
-  $Tapper::PRC::VERSION = '4.1.1';
+  $Tapper::PRC::VERSION = '4.1.2';
 }
 # ABSTRACT: Tapper - Program run control for test program automation
 

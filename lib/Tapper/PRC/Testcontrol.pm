@@ -3,7 +3,7 @@ BEGIN {
   $Tapper::PRC::Testcontrol::AUTHORITY = 'cpan:TAPPER';
 }
 {
-  $Tapper::PRC::Testcontrol::VERSION = '4.1.1';
+  $Tapper::PRC::Testcontrol::VERSION = '4.1.2';
 }
 
 use 5.010;
@@ -105,8 +105,8 @@ sub testprogram_execute
         if ($pid == 0) {        # hello child
                 close $read;
                 %ENV = (%ENV, %{$test_program->{environment} || {} });
-                open (STDOUT, ">>", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
-                open (STDERR, ">>", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
+                open (STDOUT, ">", "$output.stdout") or syswrite($write, "Can't open output file $output.stdout: $!"),exit 1;
+                open (STDERR, ">", "$output.stderr") or syswrite($write, "Can't open output file $output.stderr: $!"),exit 1;
                 if ($chdir) {
                         if (-d $chdir) {
                                 chdir $chdir;
@@ -125,10 +125,17 @@ sub testprogram_execute
                 local $SIG{ALRM}=sub {
                                       $killed = 1;
                                       kill (15, $pid);
-                                      sleep ($ENV{HARNESS_ACTIVE} ? 1 : 60); # give SIG handlers some time (but not during test)
-                                      kill (9, $pid) if kill 0, $pid;
+
+                                      # allow testprogram to react on SIGTERM
+                                      my $grace_period = $ENV{HARNESS_ACTIVE} ? 1 : 60; # wait less during test
+                                      while ($grace_period and (kill 0, $pid)) {
+                                              waitpid($pid,0);
+                                              sleep 1;
+                                              $grace_period--;
+                                      }
+                                      kill (9, $pid);
                                      };
-                alarm ($test_program->{timeout});
+                alarm ($test_program->{timeout} || 0);
                 waitpid($pid,0);
                 my $retval = $?;
                 alarm(0);
@@ -545,7 +552,7 @@ sub run
                 sleep 2;
                 kill 9, $config->{keep_alive_child};
         }
-
+        sleep 1; # make sure last end-testing can't overtake last end-testprogram (Yes, this did happen)
         $retval = $self->mcp_inform({state => 'end-testing'});
 
 
